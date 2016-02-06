@@ -18,9 +18,8 @@ type RequestVisitor func(req *http.Request) error
 // on each request.
 type Transport struct {
 	// Base is the wrapped RoundTripper.
-	// It must not be nil.
-	// You should not modify this field: it is only exported so that you may access
-	// specific methods of the underlying RoundTripper.
+	// If nil, http.DefaultTransport will be used for the request.
+	// Do not modify this field while there are outstanding requests.
 	Base http.RoundTripper
 
 	// RequestVisitor is called for each request.
@@ -35,7 +34,6 @@ type Transport struct {
 }
 
 // NewTransport creates a Transport with the given RoundTripper and RequestVisitor.
-// If Base is nil, http.DefaultTransport is used instead.
 func NewTransport(Base http.RoundTripper, RequestVisitor RequestVisitor) Transport {
 	if Base == nil {
 		Base = http.DefaultTransport
@@ -61,7 +59,9 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 
 	t.setModReq(req, mod)
-	res, err := t.Base.RoundTrip(mod)
+
+	Base := t.getBase()
+	res, err := Base.RoundTrip(mod)
 
 	if err != nil {
 		t.setModReq(req, nil)
@@ -80,7 +80,7 @@ func (t *Transport) CancelRequest(req *http.Request) {
 	type canceler interface {
 		CancelRequest(*http.Request)
 	}
-	if cr, ok := t.Base.(canceler); ok {
+	if cr, ok := t.getBase().(canceler); ok {
 		t.mu.Lock()
 		modReq := t.modReq[req]
 		delete(t.modReq, req)
@@ -99,6 +99,15 @@ func (t *Transport) setModReq(orig, mod *http.Request) {
 	} else {
 		t.modReq[orig] = mod
 	}
+}
+
+// getBase gets the correct base transport to use for a given request.
+// If t.Base is nil, http.DefaultTransport is used.
+func (t *Transport) getBase() http.RoundTripper {
+	if t.Base == nil {
+		return http.DefaultTransport
+	}
+	return t.Base
 }
 
 // cloneRequest creates a clone of the given request, copying over header values.
