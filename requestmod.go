@@ -36,11 +36,11 @@ type Transport struct {
 
 // NewTransport creates a Transport with the given RoundTripper and RequestVisitor.
 // If Base is nil, http.DefaultTransport is used instead.
-func NewTransport(Base http.RoundTripper, RequestVisitor RequestVisitor) Transport {
+func NewTransport(Base http.RoundTripper, RequestVisitor RequestVisitor) http.RoundTripper {
 	if Base == nil {
 		Base = http.DefaultTransport
 	}
-	return Transport{
+	return &Transport{
 		Base:           Base,
 		RequestVisitor: RequestVisitor,
 		modReq:         make(map[*http.Request]*http.Request),

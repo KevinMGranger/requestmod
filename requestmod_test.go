@@ -27,7 +27,7 @@ var expecting string = "this is a test"
 func makeClient(Base http.RoundTripper, RequestVisitor RequestVisitor) *http.Client {
 	cli := new(http.Client)
 	trans := NewTransport(Base, RequestVisitor)
-	cli.Transport = &trans
+	cli.Transport = trans
 	return cli
 }
 
