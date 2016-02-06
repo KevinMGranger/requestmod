@@ -1,5 +1,7 @@
 # requestmod
 
+[![Build Status](https://travis-ci.org/KevinMGranger/requestmod.svg?branch=master)](https://travis-ci.org/KevinMGranger/requestmod)
+
 requestmod lets you wrap an existing http.RoundTripper, inspecting and/or
 modifying each request that comes through.
 
